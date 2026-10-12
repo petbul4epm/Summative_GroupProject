@@ -1,6 +1,7 @@
 // Student 2: frontend state, safe DOM rendering and FastAPI integration.
 // Demo is explicit over HTTP; opening the file directly also enables demo mode.
 const demoMode = location.protocol === 'file:' || new URLSearchParams(location.search).get('demo') === '1';
+const API_BASE_URL = "http://127.0.0.1:8000";
 const DEMO_KEY = 'edutrack-frontend-demo-v1';
 let demoRecords = [];
 try { demoRecords = JSON.parse(localStorage.getItem(DEMO_KEY) || '[]'); }
@@ -35,7 +36,9 @@ const form = document.querySelector('#assignment-form');
 const filter = document.querySelector('#filter');
 async function api(path='', options={}) {
   if (demoMode) return demoRequest(path, options);
-  const response = await fetch('/assignments'+path, options);
+ 
+const response = await fetch(API_BASE_URL + '/assignments' + path, options);
+
   const data = await response.json();
   if (!response.ok) {
     const detail = Array.isArray(data.detail) ? data.detail.map(e=>e.loc.slice(1).join('.')+': '+e.msg).join('; ') : data.detail;
