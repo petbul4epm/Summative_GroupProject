@@ -1,9 +1,58 @@
+
+# EduTrack - Git Ignore Rules
+
+# Python virtual environments
 .venv/
 venv/
+env/
+ENV/
+
+# Python cache and compiled files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Environment variables and secrets
 .env
 .env.*
+!.env.example
+
+# SQLite local databases
 *.db
+*.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Python testing and coverage reports
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+test-results/
+
+# Python build and distribution
+build/
+dist/
+*.egg-info/
+
+# Type checking and linting caches
+.mypy_cache/
+.ruff_cache/
+
+# macOS temporary files
 .DS_Store
+.AppleDouble
+
+# VS Code user-specific settings
+.vscode/*
+!.vscode/extensions.json
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.swp
+*~
