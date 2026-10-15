@@ -1,85 +1,177 @@
-EduTrack — Group Project
+# EduTrack – Student Assignment & Progress Tracker
 
-A local student assignment and progress tracker for CPU4106. Proposed alignment: UN SDG 4 Quality Education, by helping learners organise study work. Educational impact is a hypothesis to evaluate, not a measured result.
+## 1. Project Overview
 
-Run
-Requires Python 3.10 or newer; install the dependencies in a virtual environment.
+EduTrack is a student assignment and progress tracking web application developed for the **CPU4106 Group Project** at Bath Spa University / GBS.
 
-bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+The project supports **UN Sustainable Development Goal 4 (SDG 4) – Quality Education** by aiming to help students organise assignments, manage deadlines and monitor academic task completion.
+
+EduTrack is being developed as a local, single-user prototype over four development weeks, followed by a group presentation in Week 5.
+
+## 2. Project Aim and Objectives
+
+The aim is to develop a simple, responsive web application for managing academic assignments.
+
+The objectives are to:
+
+- Create and view assignments.
+- Edit assignment details.
+- Mark assignments as completed.
+- Delete assignments.
+- Track deadlines and completion progress.
+- Store assignment data in SQLite.
+- Connect the frontend and backend through a REST API.
+- Test the application's core functionality.
+
+## 3. Project Scope
+
+### In Scope
+
+- Student assignment dashboard.
+- Add, view, edit and delete assignments.
+- Assignment deadlines and completion status.
+- Optional assignment module and priority, subject to team approval.
+- SQLite database storage.
+- REST API using Python and FastAPI.
+- Responsive frontend using HTML, CSS and JavaScript.
+- Input validation and functional testing.
+
+### Out of Scope
+
+- Online course delivery or learning materials.
+- Student attendance tracking.
+- Assignment grading by lecturers.
+- Student–lecturer messaging.
+- Online assignment file submissions.
+- Advanced analytics or AI recommendations.
+- Complex authentication and role management.
+
+## 4. Technology Stack
+
+| Technology | Purpose |
+| --- | --- |
+| HTML, CSS, JavaScript | Frontend and User Interface |
+| Python | Backend development |
+| FastAPI | REST API |
+| SQLite | Database |
+| Pydantic | Data validation |
+| Uvicorn | Local development server |
+| VS Code | Development environment |
+| Git and GitHub | Version control and collaboration |
+| GitHub Projects | Task management |
+| Microsoft Excel | Gantt Chart and milestones |
+| diagrams.net | Technical diagrams |
+
+## 5. System Architecture
+
+EduTrack uses a proposed three-tier architecture:
+
+1. Presentation Tier – Frontend and User Interface.
+2. Application Tier – Python and FastAPI.
+3. Data Tier – SQLite database.
+
+The frontend communicates with the backend through HTTP requests and JSON responses. The backend accesses SQLite using SQL queries.
+
+![EduTrack System Architecture](docs/system-architecture.png)
+
+## 6. Project Structure
+
+The planned repository structure is:
+
+```text
+Summative_GroupProject/
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+├── backend/
+│   ├── main.py
+│   ├── models.py
+│   ├── database.py
+│   └── requirements.txt
+├── docs/
+│   ├── README.md
+│   ├── database-design.md
+│   ├── database-erd.png
+│   ├── system-architecture.png
+│   └── api-specification.md
+├── .gitignore
+└── README.md
+```
+
+Some backend files and functionality are planned and may not yet exist on the main branch.
+
+## 7. Local Development
+
+The backend will run locally using Python, FastAPI and SQLite.
+
+The proposed setup commands, to be verified once the backend implementation is integrated, are:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python -m pip install -r backend/requirements.txt
 python -m uvicorn backend.main:app --reload
+```
 
-Open http://127.0.0.1:8000 in your browser. Do not open index.html directly: it needs the API. Stop with Ctrl+C. SQLite is created automatically in backend/edutrack.db. 
+Once implemented and running, the API is expected at:
 
-Features
-Add assignments with title, description, due date, optional module and priority; view details; edit; filter by pending/completed/overdue; mark completion; delete with confirmation; show counts and completion percentage. Responsive layout with labelled inputs and status messages.
+- `http://127.0.0.1:8000`
+- API documentation: `http://127.0.0.1:8000/docs`
 
-Structure and proposed ownership
+These instructions describe the planned development setup, not a verified deployment.
 
-- frontend/index.html, style.css, script.js — Petya and Shahzad: frontend and UI design.
-- backend/main.py, database.py, requirements.txt — Sergiu: backend, database and backend testing.
-- tests/ — everyone: automated and manual validation.
-- docs/ — Farah coordinates; everyone supplies evidence.
-- README.md — everyone maintains setup and scope.
+## 8. Team Responsibilities
 
-Roles are proposed; agree them with the group. Generated code is a starting implementation, not evidence that any student has already completed these contributions.
+| Role | Responsibility |
+| --- | --- |
+| Backend Developer – Sergiu | SQLite, Python, FastAPI, REST API and backend testing |
+| Frontend Developers – Petya and Shahzad | UI design, dashboard, HTML, CSS, JavaScript and frontend testing |
+| Project Coordinator – Farah | Scrum coordination, Gantt Chart, GitHub Projects and documentation |
 
-Testing
+All team members contribute to requirements review, integration, testing and the final presentation.
 
-bash
-python -m pytest -q
+## 9. Technical Documentation
 
-See tests/manual-test-plan.md for browser checks and docs/api.md for endpoints.
+The `docs/` folder contains the proposed technical design.
 
-GitHub upload
+- [Database Design](docs/database-design.md)
+- [Entity Relationship Diagram](docs/database-erd.png)
+- [System Architecture Diagram](docs/system-architecture.png)
+- [REST API Specification](docs/api-specification.md)
 
-1. Use the existing petbul4epm/Summative_GroupProject repository. Clone it for routine teamwork. The init commands below apply only to a new local copy without Git history.
-2. Open the extracted project folder in a terminal.
-3. Run the commands below, replacing YOUR-USERNAME with the repository owner's username.
+The API specification describes the proposed endpoints and expected data formats. It must be reviewed with the frontend team before being treated as the final contract.
 
-bash
-git init
-git add .
-git commit -m "Add EduTrack prototype and project documentation"
-git branch -M main
-git remote add origin https://github.com/petbul4epm/Summative_GroupProject.git
-git push -u origin main
+## 10. Project Schedule
 
+| Week | Main Activities |
+| --- | --- |
+| Week 1 | Project planning, scope, GitHub setup and Gantt Chart |
+| Week 2 | Database and API design, development |
+| Week 3 | Frontend/backend implementation and integration |
+| Week 4 | Testing, debugging, integration verification and documentation |
+| Week 5 | Group presentation and viva |
 
-Invite group members in repository Settings → Collaborators. For your next changes:
+The detailed Gantt Chart and milestone tracker are maintained separately and will be added to the repository after review.
 
-bash
-git switch -c -frontend
-git add frontend/
-git commit -m "Improve frontend"
-git push -frontend
+## 11. Development and Testing Status
 
-Open a pull request on GitHub and ask a teammate to review. Other students use their own branches. Upload the extracted files, not just the ZIP. Never commit real learner data or credentials.
+The project is under active development.
 
-Scope and limitations
-Scope follows the supplied EduTrack Group Project Roadmap: single-user assignment tracking. Local single-user prototype, no login, roles, cloud hosting or notifications. The Uvicorn development server is for local demonstrations. Use synthetic data only. Accessibility requires manual testing; no compliance claim is made.
+Database design, ERD, system architecture and API specification have been prepared for team review. The backend implementation and frontend integration must be verified through actual code review and testing.
 
-Assessment work still required
-Complete actual Scrum records, research, design decisions, usability testing and individual reflections. The included documents are templates/proposals, not completed evidence. Your brief requires a functional artefact, live defence, individual article and weekly portfolio. Review and understand the code, adapt it with your team, and follow your university's rules on acknowledging assistance. Do not claim generated work or invented activity as your own.
+Testing will include CRUD operations, input validation, frontend interaction, responsive layouts and error handling.
 
-API and team clarification
-FastAPI documentation: http://127.0.0.1:8000/docs. Frontend and API use the same server. Launch from the project root. 
-Sergiu is Student 1; Petya and Shahzad share Student 2; Farah is Student 3. 
+No unverified functionality or test result should be reported as completed.
 
-Planning files
-- docs/EduTrack_Gantt_Chart.xlsx uses roles only and preserves the supplied weekly schedule.
-- docs/EduTrack_Project_Tracker.xlsx assigns named owners and retains the updated dates.
-These workbooks currently have different schedule structures: Gantt uses Weeks 1–5; tracker contains four sprint summary rows, with tasks assigned to Sprints 1 and 2. Treat schedules as team planning inputs to reconcile, rather than verified deadlines.
+## 12. Collaboration Workflow
 
-Frontend-only demo
-Open frontend/index.html directly, or use ?demo=1 over HTTP, to try the separate localStorage demo. Without that flag, the served application calls FastAPI. Demo records do not transfer to SQLite.
+Team members work on separate Git branches and submit Pull Requests for review.
 
-Team workflow
-Small feature branches created and reviewed pull requests. 
-Sergiu: backend and API tests; 
-Petya and Shahzad: frontend; 
-Farah: Scrum, GitHub Projects, QA coordination, Gantt and documentation. 
-All members contribute requirements, integration tests and the live defence. The tracker and code are generated starting material: record actual commits, research, test results and contributions.
+Changes should be checked before merging into `main`. GitHub Issues and Projects are used to record task ownership and progress.
+
+The team will maintain evidence of actual contributions, implementation decisions, testing and project meetings.
+
+---
+
+**EduTrack | CPU4106 Group Project | SDG 4 – Quality Education**
