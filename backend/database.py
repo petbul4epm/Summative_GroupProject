@@ -32,17 +32,26 @@ def create_assignments_table(database_path=DATABASE_PATH):
         connection.close()
 
 
+
 # CREATE — Add a new assignment
-def create_assignment(title, due_date, database_path=DATABASE_PATH):
+def create_assignment(
+    title,
+    due_date,
+    database_path=DATABASE_PATH,
+    description=None,
+    module=None,
+    priority=None
+):
     connection = get_connection(database_path)
 
     try:
         cursor = connection.execute(
             """
-            INSERT INTO assignments (title, due_date)
-            VALUES (?, ?)
+            INSERT INTO assignments
+            (title, due_date, description, module, priority)
+            VALUES (?, ?, ?, ?, ?)
             """,
-            (title, due_date)
+            (title, str(due_date), description, module, priority)
         )
 
         connection.commit()
@@ -101,7 +110,7 @@ def update_assignment(assignment_id, title, due_date, status, database_path=DATA
             SET title = ?, due_date = ?, status = ?
             WHERE id = ?
             """,
-            (title, due_date, status, assignment_id)
+            (title, str(due_date), status, assignment_id)
         )
 
         connection.commit()
