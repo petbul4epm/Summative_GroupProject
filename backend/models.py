@@ -19,6 +19,9 @@ class AssignmentUpdate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     due_date: date
     status: Literal["pending", "in_progress", "completed"]
+    description: str | None = None
+    module: str | None = None
+    priority: str | None = None
 
 
 # RESPONSE - Data returned by FastAPI
