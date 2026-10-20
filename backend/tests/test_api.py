@@ -83,7 +83,8 @@ def test_get_assignment_by_id_api(client):
             "due_date": "2026-11-25"
         }
     )
-
+    print("POST status:", created.status_code)
+    print("POST response:", created.json())
     assignment_id = created.json()["id"]
 
     response = client.get(
@@ -164,3 +165,55 @@ def test_invalid_assignment_api(client):
     )
 
     assert response.status_code == 422
+
+
+# Test 17 - PUT: Update all assignment fields
+def test_update_all_assignment_fields_api(client):
+
+    # Step 1 - Create an assignment
+    created = client.post(
+        "/assignments",
+        json={
+            "title": "Database Coursework",
+            "due_date": "2026-11-20",
+            "description": "Initial description",
+            "module": "Databases",
+            "priority": "low"
+        }
+    )
+
+    assert created.status_code == 201
+    assignment_id = created.json()["id"]
+
+    # Step 2 - Update all fields
+    response = client.put(
+        f"/assignments/{assignment_id}",
+        json={
+            "title": "Updated Database Coursework",
+            "due_date": "2026-12-01",
+            "status": "completed",
+            "description": "Updated description",
+            "module": "CPU4106",
+            "priority": "high"
+        }
+    )
+
+    assert response.status_code == 200
+
+    # Step 3 - Retrieve the updated assignment
+    check = client.get(
+        f"/assignments/{assignment_id}"
+    )
+
+    assert check.status_code == 200
+
+    assignment = check.json()
+
+    # Step 4 - Verify all updated fields
+    assert assignment["title"] == "Updated Database Coursework"
+    assert assignment["due_date"] == "2026-12-01"
+    assert assignment["status"] == "completed"
+    assert assignment["description"] == "Updated description"
+    assert assignment["module"] == "CPU4106"
+    assert assignment["priority"] == "high"
+
