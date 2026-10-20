@@ -1,219 +1,132 @@
 
-# EduTrack - Automated FastAPI Tests
+# EduTrack — FastAPI Backend
+from contextlib import asynccontextmanager
+from fastapi import HTTPException, status
+from backend.models import AssignmentCreate, AssignmentResponse
+from backend.database import create_assignment, get_assignment
+from fastapi import FastAPI
+from backend.database import get_assignments
+from backend.models import AssignmentUpdate
+from backend.database import update_assignment
+from backend.database import create_assignments_table
+from backend.database import delete_assignment
 
-import pytest
-from functools import partial
-from fastapi.testclient import TestClient
+# Initialise SQLite when FastAPI starts
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_assignments_table()
+    yield
 
-import backend.main as api
-from backend.database import (
-    create_assignments_table,
-    create_assignment,
-    get_assignments,
-    get_assignment,
-    update_assignment,
-    delete_assignment,
+#Create FastAPI application
+app = FastAPI(
+    title="EduTrack API",
+    description="Student Assignment & Progress Tracker",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 
-# Use a temporary SQLite database for every test
-@pytest.fixture
-def client(tmp_path, monkeypatch):
-    test_db = tmp_path / "test_api.db"
+# Root endpoint
+@app.get("/")
+def home():
+    return {"message": "EduTrack API is running"}
 
-    database_functions = {
-        "create_assignments_table": create_assignments_table,
-        "create_assignment": create_assignment,
-        "get_assignments": get_assignments,
-        "get_assignment": get_assignment,
-        "update_assignment": update_assignment,
-        "delete_assignment": delete_assignment,
-    }
 
-    for name, function in database_functions.items():
-        monkeypatch.setattr(
-            api,
-            name,
-            partial(function, database_path=test_db)
+# POST — Create a new assignment
+@app.post(
+    "/assignments",
+    response_model=AssignmentResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def add_assignment(assignment: AssignmentCreate):
+    assignment_id = create_assignment(
+        title=assignment.title,
+        due_date=assignment.due_date,
+        description=assignment.description,
+        module=assignment.module,
+        priority=assignment.priority
+    )
+
+    created_assignment = get_assignment(assignment_id)
+
+    if created_assignment is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Assignment could not be retrieved"
         )
 
-    with TestClient(api.app) as test_client:
-        yield test_client
+    return created_assignment
 
 
-# Test 10 - POST: Create assignment
-def test_create_assignment_api(client):
-    response = client.post(
-        "/assignments",
-        json={
-            "title": "Python Coursework",
-            "due_date": "2026-11-15",
-            "module": "CPU4106",
-            "priority": "high"
-        }
+
+# GET — Retrieve all assignments
+@app.get(
+    "/assignments",
+    response_model=list[AssignmentResponse]
+)
+def list_assignments():
+    return get_assignments()
+
+
+
+# GET — Retrieve a single assignment by ID
+@app.get(
+    "/assignments/{assignment_id}",
+    response_model=AssignmentResponse
+)
+def read_assignment(assignment_id: int):
+    assignment = get_assignment(assignment_id)
+
+    if assignment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment not found"
+        )
+
+    return assignment
+
+
+
+# PUT — Update an existing assignment
+@app.put(
+    "/assignments/{assignment_id}",
+    response_model=AssignmentResponse
+)
+def edit_assignment(assignment_id: int, assignment: AssignmentUpdate):
+
+    updated = update_assignment(
+        assignment_id,
+        assignment.title,
+        assignment.due_date,
+        assignment.status,
+        description=assignment.description,
+        module=assignment.module,
+        priority=assignment.priority
     )
 
-    assert response.status_code == 201
-    assert response.json()["title"] == "Python Coursework"
-    assert response.json()["status"] == "pending"
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment not found"
+        )
+
+    return get_assignment(assignment_id)
 
 
-# Test 11 - GET: Retrieve all assignments
-def test_get_assignments_api(client):
-    client.post(
-        "/assignments",
-        json={
-            "title": "Database Coursework",
-            "due_date": "2026-11-20"
-        }
-    )
+# DELETE — Remove an assignment by ID
+@app.delete(
+    "/assignments/{assignment_id}",
+    status_code=204
+)
+def remove_assignment(assignment_id: int):
+    deleted = delete_assignment(assignment_id)
 
-    response = client.get("/assignments")
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Assignment not found"
+        )
 
-    assert response.status_code == 200
-    assert len(response.json()) == 1
+    return None
 
-
-# Test 12 - GET: Retrieve assignment by ID
-def test_get_assignment_by_id_api(client):
-    created = client.post(
-        "/assignments",
-        json={
-            "title": "Networking Coursework",
-            "due_date": "2026-11-25"
-        }
-    )
-    print("POST status:", created.status_code)
-    print("POST response:", created.json())
-    assignment_id = created.json()["id"]
-
-    response = client.get(
-        f"/assignments/{assignment_id}"
-    )
-
-    assert response.status_code == 200
-    assert response.json()["id"] == assignment_id
-
-
-# Test 13 - GET: Assignment not found
-def test_get_missing_assignment_api(client):
-    response = client.get("/assignments/9999")
-
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Assignment not found"
-
-
-# Test 14 - PUT: Update assignment
-def test_update_assignment_api(client):
-    created = client.post(
-        "/assignments",
-        json={
-            "title": "Python Coursework",
-            "due_date": "2026-11-15"
-        }
-    )
-
-    assignment_id = created.json()["id"]
-
-    response = client.put(
-        f"/assignments/{assignment_id}",
-        json={
-            "title": "Updated Coursework",
-            "due_date": "2026-11-20",
-            "status": "completed"
-        }
-    )
-
-    assert response.status_code == 200
-    assert response.json()["title"] == "Updated Coursework"
-    assert response.json()["status"] == "completed"
-
-
-# Test 15 - DELETE: Remove assignment
-def test_delete_assignment_api(client):
-    created = client.post(
-        "/assignments",
-        json={
-            "title": "Delete Test",
-            "due_date": "2026-11-30"
-        }
-    )
-
-    assignment_id = created.json()["id"]
-
-    response = client.delete(
-        f"/assignments/{assignment_id}"
-    )
-
-    assert response.status_code == 204
-
-    check = client.get(
-        f"/assignments/{assignment_id}"
-    )
-
-    assert check.status_code == 404
-
-
-# Test 16 - POST: Invalid title
-def test_invalid_assignment_api(client):
-    response = client.post(
-        "/assignments",
-        json={
-            "title": "",
-            "due_date": "2026-11-15"
-        }
-    )
-
-    assert response.status_code == 422
-
-
-# Test 17 - PUT: Update all assignment fields
-def test_update_all_assignment_fields_api(client):
-
-    # Step 1 - Create an assignment
-    created = client.post(
-        "/assignments",
-        json={
-            "title": "Database Coursework",
-            "due_date": "2026-11-20",
-            "description": "Initial description",
-            "module": "Databases",
-            "priority": "low"
-        }
-    )
-
-    assert created.status_code == 201
-    assignment_id = created.json()["id"]
-
-    # Step 2 - Update all fields
-    response = client.put(
-        f"/assignments/{assignment_id}",
-        json={
-            "title": "Updated Database Coursework",
-            "due_date": "2026-12-01",
-            "status": "completed",
-            "description": "Updated description",
-            "module": "CPU4106",
-            "priority": "high"
-        }
-    )
-
-    assert response.status_code == 200
-
-    # Step 3 - Retrieve the updated assignment
-    check = client.get(
-        f"/assignments/{assignment_id}"
-    )
-
-    assert check.status_code == 200
-
-    assignment = check.json()
-
-    # Step 4 - Verify all updated fields
-    assert assignment["title"] == "Updated Database Coursework"
-    assert assignment["due_date"] == "2026-12-01"
-    assert assignment["status"] == "completed"
-    assert assignment["description"] == "Updated description"
-    assert assignment["module"] == "CPU4106"
-    assert assignment["priority"] == "high"
 
