@@ -1,73 +1,145 @@
-# EduTrack – REST API Specification
+# EduTrack — REST API Specification
 
-**Project:** EduTrack – Student Assignment & Progress Tracker  
+**Project:** EduTrack — Student Assignment & Progress Tracker  
 **Module:** CPU4106 Group Project  
-**Document Version:** 1.0 – Draft for Team Review  
+**Document Version:** 1.2 — Backend Validation Update  
+**Date:** 21 October 2026  
 **Responsible Role:** Backend Developer  
-**Technology:** Python, FastAPI, SQLite  
-**Status:** Proposed API Design – Not Yet Implemented
+**Technology:** Python, FastAPI, Pydantic, SQLite  
+**Status:** Backend Implemented and Tested — Frontend Integration Pending
 
 ---
 
 ## 1. API Overview
 
-EduTrack is a web-based student assignment tracker designed to help students organise coursework, manage deadlines and monitor assignment completion.
+EduTrack is a web-based student assignment and progress tracking application designed to help students organise coursework, manage deadlines and monitor assignment completion.
 
-The application uses a REST API developed with Python and FastAPI to connect the frontend interface to an SQLite database.
+The application follows a three-tier architecture:
 
-The API supports creating, retrieving, updating and deleting assignments (CRUD operations). Data is exchanged between the frontend and backend using HTTP requests and JSON.
+- **Presentation Tier:** HTML, CSS and JavaScript frontend.
+- **Application Tier:** Python FastAPI backend with Pydantic validation.
+- **Data Tier:** SQLite database providing persistent assignment storage.
 
-**Base URL:** `http://127.0.0.1:8000`  
+The frontend communicates with the backend through HTTP requests using JSON. The backend validates incoming data, performs the requested database operations and returns structured responses.
+
+The REST API supports Create, Read, Update and Delete (CRUD) operations.
+
+**Local API Base URL:** `http://127.0.0.1:8001`  
 **Data Format:** JSON  
 **Content-Type:** `application/json`  
-**API Documentation:** `http://127.0.0.1:8000/docs` (available after implementation)
+**Swagger UI:** `http://127.0.0.1:8001/docs`  
+**OpenAPI Schema:** `http://127.0.0.1:8001/openapi.json`
 
-The proposed application is a local, single-user prototype. Authentication and role management are outside the agreed project scope.
+Port 8001 is used for local development and testing. The FastAPI port can be changed through the Uvicorn command.
 
-## 2. API Endpoints
+EduTrack is a local, single-user academic prototype. Authentication, user account management, cloud hosting and advanced analytics are outside the agreed MVP scope.
+
+## 2. System Architecture
+
+The backend implementation consists of three main Python files.
+
+| File | Responsibility |
+| --- | --- |
+| `backend/main.py` | FastAPI application, REST endpoints, request handling and HTTP responses |
+| `backend/models.py` | Pydantic models and input/output validation |
+| `backend/database.py` | SQLite connection, table creation and CRUD operations |
+
+The SQLite database is stored locally as `backend/edutrack.db`.
+
+The backend automatically initialises the assignments table during application startup using the FastAPI lifespan mechanism.
+
+The frontend does not access SQLite directly. All assignment operations are handled through the API.
+
+## 3. REST API Endpoints
+
+The implemented API contains five core assignment-management endpoints and one root endpoint.
 
 | HTTP Method | Endpoint | Description | Success Status |
 | --- | --- | --- | --- |
+| GET | `/` | API health message | 200 OK |
 | GET | `/assignments` | Retrieve all assignments | 200 OK |
-| GET | `/assignments/{id}` | Retrieve a specific assignment | 200 OK |
+| GET | `/assignments/{assignment_id}` | Retrieve an assignment by ID | 200 OK |
 | POST | `/assignments` | Create a new assignment | 201 Created |
-| PUT | `/assignments/{id}` | Update an existing assignment | 200 OK |
-| DELETE | `/assignments/{id}` | Delete an assignment | 204 No Content |
+| PUT | `/assignments/{assignment_id}` | Update an existing assignment | 200 OK |
+| DELETE | `/assignments/{assignment_id}` | Delete an assignment | 204 No Content |
 
-These five endpoints provide the core assignment-management functions required by EduTrack.
+The `{assignment_id}` path parameter represents the integer ID of an assignment.
 
-## 3. Assignment Data Model
+All assignment endpoints have been implemented in FastAPI.
 
-The API is designed around the SQLite `assignments` table defined in the database design document.
+## 4. Assignment Data Model
+
+The API uses one primary SQLite table named `assignments`.
 
 | Field | Data Type | Required | Validation |
 | --- | --- | --- | --- |
-| id | Integer | Server-generated | Unique primary key |
-| title | String | Yes | Not blank; maximum 200 characters |
-| description | String or null | No | Maximum 2000 characters |
-| due_date | String | Yes | Valid date in YYYY-MM-DD format |
-| status | String | No on creation | `pending` or `completed`; default `pending` |
-| module | String or null | No | Maximum 100 characters |
-| priority | String or null | No | `low`, `medium`, `high` or null |
+| `id` | Integer | Generated by database | Unique primary key |
+| `title` | String | Yes | Minimum 1 character, maximum 200 characters |
+| `description` | String or null | No | Maximum 2,000 characters |
+| `due_date` | Date | Yes | Valid date in `YYYY-MM-DD` format |
+| `status` | String | Required for PUT | `pending` or `completed`; defaults to `pending` when created |
+| `module` | String or null | No | Maximum 100 characters |
+| `priority` | String or null | No | `low`, `medium`, `high` or null |
 
-The `id` field is generated by SQLite and must not be provided by the frontend when creating an assignment.
+The database generates `id` automatically.
 
-The `module` and `priority` fields are proposed optional features that require team confirmation before implementation.
+### 4.1 AssignmentCreate Model
 
-## 4. GET /assignments — Retrieve All Assignments
+`AssignmentCreate` validates data submitted through `POST /assignments`.
 
-**Purpose:** Retrieve all assignments stored in the database.
+Required fields:
+
+- `title`
+- `due_date`
+
+Optional fields:
+
+- `description`
+- `module`
+- `priority`
+
+New assignments automatically receive the stored status `pending`.
+
+The creation model does not expose a status field for selecting `completed` during initial creation.
+
+### 4.2 AssignmentUpdate Model
+
+`AssignmentUpdate` validates data submitted through `PUT /assignments/{assignment_id}`.
+
+The following fields are required:
+
+- `title`
+- `due_date`
+- `status`
+
+The fields `description`, `module` and `priority` remain optional.
+
+The PUT endpoint updates the editable fields of the existing assignment while preserving its ID.
+
+Because PUT uses a full update model, optional fields omitted from the request may be stored as null. The frontend should therefore submit all values it intends to preserve.
+
+### 4.3 AssignmentResponse Model
+
+`AssignmentResponse` defines the assignment data returned by the API.
+
+It includes:
+
+- All assignment fields from `AssignmentCreate`
+- The server-generated assignment `id`
+- The stored `status`
+
+The response model enforces the same priority, description, module and status restrictions.
+
+## 5. GET /assignments — Retrieve All Assignments
+
+**Purpose:** Retrieve all assignments stored in the SQLite database.
 
 **HTTP Method:** GET  
 **Endpoint:** `/assignments`  
 **Request Body:** None  
 **Successful Response:** 200 OK
 
-### List Assignments — Example Request
-
-`GET /assignments`
-
-### List Assignments — Example JSON Response
+### Example Response
 
 ```json
 [
@@ -76,45 +148,47 @@ The `module` and `priority` fields are proposed optional features that require t
     "title": "Database Coursework",
     "description": "Create an ERD diagram",
     "due_date": "2026-11-20",
-    "status": "pending",
     "module": "CPU4106",
-    "priority": "high"
+    "priority": "high",
+    "status": "pending"
   },
   {
     "id": 2,
     "title": "Python Assignment",
     "description": null,
     "due_date": "2026-11-25",
-    "status": "completed",
     "module": null,
-    "priority": null
+    "priority": null,
+    "status": "completed"
   }
 ]
 ```
 
-If the database contains no assignments, the API returns an empty JSON array:
+If no assignments exist, the API returns:
 
 ```json
 []
 ```
 
-The frontend uses this endpoint to populate the student dashboard.
+The frontend uses this endpoint to populate the assignment list and calculate dashboard statistics.
 
-## 5. GET /assignments/{id} — Retrieve One Assignment
+The API response contains the stored assignment status. The frontend calculates overdue assignments separately.
 
-**Purpose:** Retrieve an assignment using its unique identifier.
+## 6. GET /assignments/{assignment_id} — Retrieve One Assignment
+
+**Purpose:** Retrieve a single assignment using its unique ID.
 
 **HTTP Method:** GET  
-**Endpoint:** `/assignments/{id}`  
-**Path Parameter:** `id` (integer)  
+**Endpoint:** `/assignments/{assignment_id}`  
+**Path Parameter:** Integer  
 **Request Body:** None  
 **Successful Response:** 200 OK
 
-### Retrieve One Assignment — Example Request
+### Example Request
 
 `GET /assignments/1`
 
-### Retrieve One Assignment — Example JSON Response
+### Example Response
 
 ```json
 {
@@ -122,24 +196,24 @@ The frontend uses this endpoint to populate the student dashboard.
   "title": "Database Coursework",
   "description": "Create an ERD diagram",
   "due_date": "2026-11-20",
-  "status": "pending",
   "module": "CPU4106",
-  "priority": "high"
+  "priority": "high",
+  "status": "pending"
 }
 ```
 
-### Retrieve One Assignment — Error Responses
+### Error Responses
 
-- **404 Not Found:** The assignment does not exist.
-- **422 Unprocessable Entity:** The supplied ID is not a valid integer.
+- **404 Not Found:** The requested assignment does not exist.
+- **422 Unprocessable Content:** The supplied ID is invalid.
 
-## 6. POST /assignments — Create an Assignment
+## 7. POST /assignments — Create an Assignment
 
-**Purpose:** Create a new assignment and save it in SQLite.
+**Purpose:** Create a new assignment and store it in SQLite.
 
 **HTTP Method:** POST  
 **Endpoint:** `/assignments`  
-**Request Content-Type:** `application/json`  
+**Content-Type:** `application/json`  
 **Successful Response:** 201 Created
 
 ### Example Request Body
@@ -149,13 +223,16 @@ The frontend uses this endpoint to populate the student dashboard.
   "title": "Database Coursework",
   "description": "Create an ERD diagram",
   "due_date": "2026-11-20",
-  "status": "pending",
   "module": "CPU4106",
   "priority": "high"
 }
 ```
 
-### Create Assignment — Example JSON Response
+The client does not provide the assignment ID.
+
+The backend creates the assignment with status `pending`.
+
+### Example Response
 
 ```json
 {
@@ -163,39 +240,42 @@ The frontend uses this endpoint to populate the student dashboard.
   "title": "Database Coursework",
   "description": "Create an ERD diagram",
   "due_date": "2026-11-20",
-  "status": "pending",
   "module": "CPU4106",
-  "priority": "high"
+  "priority": "high",
+  "status": "pending"
 }
 ```
 
-The frontend does not send an `id`. SQLite generates the identifier, and the backend returns the newly created assignment.
+### Validation
 
-If the `status` field is omitted, the backend assigns `pending` automatically.
+The API returns HTTP 422 when incoming data violates the Pydantic validation rules.
 
-### Create Assignment — Error Responses
+Examples include:
 
-- **422 Unprocessable Entity:** Required information is missing or invalid.
+- Empty title.
+- Invalid due date.
+- Priority outside the allowed values.
+- Description longer than 2,000 characters.
+- Module longer than 100 characters.
 
-## 7. PUT /assignments/{id} — Update an Assignment
+## 8. PUT /assignments/{assignment_id} — Update an Assignment
 
 **Purpose:** Update an existing assignment.
 
 **HTTP Method:** PUT  
-**Endpoint:** `/assignments/{id}`  
-**Path Parameter:** `id` (integer)  
-**Request Content-Type:** `application/json`  
+**Endpoint:** `/assignments/{assignment_id}`  
+**Content-Type:** `application/json`  
 **Successful Response:** 200 OK
 
-### Update Assignment — Example Request
+### Example Request
 
 `PUT /assignments/1`
 
-### Example JSON Request Body
+### Example Request Body
 
 ```json
 {
-  "title": "Database Coursework",
+  "title": "Database Coursework — Final Version",
   "description": "Complete database ERD and documentation",
   "due_date": "2026-11-25",
   "status": "completed",
@@ -204,40 +284,41 @@ If the `status` field is omitted, the backend assigns `pending` automatically.
 }
 ```
 
-### Update Assignment — Example JSON Response
+### Example Response
 
 ```json
 {
   "id": 1,
-  "title": "Database Coursework",
+  "title": "Database Coursework — Final Version",
   "description": "Complete database ERD and documentation",
   "due_date": "2026-11-25",
-  "status": "completed",
   "module": "CPU4106",
-  "priority": "medium"
+  "priority": "medium",
+  "status": "completed"
 }
 ```
 
-The `PUT` endpoint replaces the editable assignment information while retaining the existing ID.
+The backend updates all editable assignment fields while retaining the original ID.
 
-The frontend sends the complete updated assignment data, excluding `id`.
-
-### Update Assignment — Error Responses
+### Error Responses
 
 - **404 Not Found:** The assignment does not exist.
-- **422 Unprocessable Entity:** The ID or request data is invalid.
+- **422 Unprocessable Content:** The ID or request body contains invalid data.
 
-## 8. DELETE /assignments/{id} — Delete an Assignment
+The API accepts only `pending` and `completed` as stored statuses.
 
-**Purpose:** Permanently remove an existing assignment from the database.
+The previous `in_progress` value has been removed from Pydantic validation to align with the agreed assignment-status requirements.
+
+## 9. DELETE /assignments/{assignment_id} — Delete an Assignment
+
+**Purpose:** Permanently remove an assignment from SQLite.
 
 **HTTP Method:** DELETE  
-**Endpoint:** `/assignments/{id}`  
-**Path Parameter:** `id` (integer)  
+**Endpoint:** `/assignments/{assignment_id}`  
 **Request Body:** None  
 **Successful Response:** 204 No Content
 
-### Delete Assignment — Example Request
+### Example Request
 
 `DELETE /assignments/1`
 
@@ -245,42 +326,147 @@ The frontend sends the complete updated assignment data, excluding `id`.
 
 HTTP 204 No Content
 
-The response has no JSON body.
+The successful response does not contain a JSON body.
 
-### Delete Assignment — Error Responses
+### Error Responses
 
 - **404 Not Found:** The assignment does not exist.
-- **422 Unprocessable Entity:** The supplied ID is invalid.
+- **422 Unprocessable Content:** The supplied ID is invalid.
 
-The frontend should ask the user to confirm before sending a DELETE request.
+The frontend should request user confirmation before deleting an assignment.
 
-## 9. Data Validation Rules
+The frontend must also handle HTTP 204 without attempting to parse an empty response body as JSON.
 
-FastAPI will validate incoming assignment data before it is stored in SQLite.
+## 10. Data Validation Rules
 
-The proposed validation rules are:
+The API uses Pydantic models to validate requests before performing SQLite operations.
 
-1. `title` must contain non-whitespace text and must not exceed 200 characters.
-2. `description` is optional and must not exceed 2000 characters when provided.
-3. `due_date` must represent a valid calendar date in YYYY-MM-DD format.
-4. `status` must be `pending` or `completed` and defaults to `pending` when omitted during creation.
-5. `module` is optional and must not exceed 100 characters.
-6. `priority` is optional and must be `low`, `medium` or `high` when provided.
-7. `id` must be an integer generated by the database when creating an assignment.
+The updated validation rules are:
 
-Data validation will be implemented using FastAPI and Pydantic models.
-
-## 10. HTTP Status Codes and Error Handling
-
-| Status Code | Meaning | When Used |
+| Field | Validation Rule | Invalid Example |
 | --- | --- | --- |
-| 200 OK | Request successful | GET and PUT |
-| 201 Created | Resource created | POST |
-| 204 No Content | Resource deleted successfully | DELETE |
-| 404 Not Found | Requested assignment does not exist | GET, PUT, DELETE by ID |
-| 422 Unprocessable Entity | Invalid request data | Validation failures |
+| `title` | Minimum 1, maximum 200 characters | Empty string |
+| `description` | Optional, maximum 2,000 characters | 2,001 characters |
+| `due_date` | Valid calendar date | `invalid-date` |
+| `module` | Optional, maximum 100 characters | 101 characters |
+| `priority` | Only low, medium, high or null | `urgent` |
+| `status` | Only pending or completed for PUT | `in_progress` |
+| `id` | Integer path parameter | `abc` |
 
-### Example 404 Error Response
+### 10.1 Priority Validation
+
+Priority is defined using the Pydantic `Literal` type.
+
+Accepted values:
+
+- `low`
+- `medium`
+- `high`
+- `null` when optional
+
+Other values are rejected with HTTP 422.
+
+### 10.2 Description Validation
+
+Description is optional.
+
+When provided, its maximum permitted length is 2,000 characters.
+
+The backend returns HTTP 422 with the `string_too_long` validation error if this limit is exceeded.
+
+### 10.3 Module Validation
+
+Module is optional.
+
+When provided, its maximum permitted length is 100 characters.
+
+Values exceeding the limit are rejected with HTTP 422.
+
+### 10.4 Status Validation
+
+Two status values are stored and accepted by the current backend response and update models:
+
+- `pending`
+- `completed`
+
+The `in_progress` value is not part of the agreed MVP status implementation and is rejected during PUT validation.
+
+### 10.5 Validation Limitations
+
+The current title model uses `Field(min_length=1, max_length=200)`. It rejects empty strings but does not explicitly reject strings containing only whitespace.
+
+Additional whitespace validation would require a separate validator.
+
+The SQLite schema does not independently enforce every Pydantic validation rule. The API is responsible for validating incoming requests.
+
+Existing database records created before the updated validation rules may require correction if their values no longer conform to the response model.
+
+## 11. Overdue Assignment Handling
+
+The agreed EduTrack requirements include the following user-visible assignment states:
+
+- Pending
+- Completed
+- Overdue
+
+### 11.1 Stored Status and Displayed Status
+
+The backend stores two assignment statuses:
+
+`pending` and `completed`.
+
+The frontend calculates `overdue` automatically.
+
+The existing JavaScript implementation uses the following rule:
+
+```javascript
+function isOverdue(a) {
+  return a.status === 'pending' && a.due_date < todayISO();
+}
+```
+
+An assignment is overdue when:
+
+1. Its stored status is `pending`.
+2. Its due date is earlier than the current date.
+
+### 11.2 Example Behaviour
+
+| Due Date | Stored Status | Frontend Display |
+| --- | --- | --- |
+| Future date | pending | Pending |
+| Past date | pending | Overdue |
+| Past date | completed | Completed |
+
+The frontend displays overdue assignments in the dashboard and provides an Overdue filter.
+
+Overdue is a calculated presentation state rather than a separately stored SQLite value.
+
+This approach avoids introducing redundant status values into the database.
+
+### 11.3 Integration Requirement
+
+During frontend–backend integration, the team must verify that:
+
+- The frontend receives the correct `due_date` and `status` from FastAPI.
+- Overdue assignments are counted correctly.
+- The Overdue filter displays the correct assignments.
+- Marking an overdue assignment as completed removes it from the overdue category.
+
+The overdue functionality is implemented in the frontend, but its final end-to-end behaviour must be verified during integration testing.
+
+## 12. HTTP Status Codes and Error Handling
+
+| HTTP Status | Meaning | Usage |
+| --- | --- | --- |
+| 200 OK | Successful request | GET and PUT |
+| 201 Created | New resource created | POST |
+| 204 No Content | Resource deleted | DELETE |
+| 404 Not Found | Resource does not exist | GET, PUT and DELETE by ID |
+| 422 Unprocessable Content | Request validation failed | Invalid input data |
+| 500 Internal Server Error | Unexpected server-side failure | Runtime or response-validation errors |
+
+### Example 404 Response
 
 ```json
 {
@@ -288,84 +474,247 @@ Data validation will be implemented using FastAPI and Pydantic models.
 }
 ```
 
-For validation errors, FastAPI will return a JSON response describing the invalid field or parameter.
+### Example 422 — Invalid Priority
 
-All error response formats must be confirmed during implementation and testing.
+An invalid priority such as `urgent` produces a Pydantic `literal_error`.
 
-## 11. Frontend and Backend Integration
+The accepted values are `low`, `medium` and `high`.
 
-The frontend is developed using HTML, CSS and JavaScript.
+### Example 422 — Description Length
 
-The backend is developed using Python and FastAPI, with SQLite providing persistent storage.
+Submitting 2,001 characters produces:
 
-### Example Workflow — Creating an Assignment
+- Error type: `string_too_long`
+- Field: `description`
+- Maximum length: 2,000
+
+### Example 422 — Module Length
+
+Submitting 101 characters produces:
+
+- Error type: `string_too_long`
+- Field: `module`
+- Maximum length: 100
+
+### Example 422 — Invalid Status
+
+Submitting `in_progress` through PUT produces:
+
+- Error type: `literal_error`
+- Field: `status`
+- Accepted values: `pending`, `completed`
+
+The API returns structured JSON validation errors describing the rejected field and reason.
+
+## 13. Frontend and Backend Integration
+
+The frontend is implemented using HTML, CSS and JavaScript.
+
+The backend is implemented using Python and FastAPI, with SQLite providing persistent storage.
+
+### 13.1 Example Workflow — Creating an Assignment
 
 1. The student opens the EduTrack application.
-2. The student completes the Add Assignment form.
-3. JavaScript sends a POST request containing JSON data.
-4. FastAPI validates the request.
-5. The backend inserts the assignment into SQLite.
-6. The backend returns HTTP 201 and the created assignment.
-7. The frontend updates the dashboard using the returned data.
+2. The student enters assignment information.
+3. JavaScript prepares a JSON request.
+4. The frontend sends an HTTP POST request.
+5. FastAPI validates the request using `AssignmentCreate`.
+6. The backend inserts the assignment into SQLite.
+7. SQLite generates the assignment ID.
+8. FastAPI returns HTTP 201 and the created assignment.
+9. The frontend updates the assignment list and dashboard.
 
-The frontend must not connect directly to SQLite. Database operations are handled by the backend.
+### 13.2 API Communication
 
-The proposed local architecture serves the frontend and API from the same FastAPI application origin.
+The frontend uses JavaScript `fetch()` to communicate with the REST API.
 
-## 12. API Testing Plan
+The API returns JSON responses for successful GET, POST and PUT requests.
 
-After implementation, API endpoints will be tested using FastAPI's interactive Swagger UI documentation, available at:
+DELETE returns HTTP 204 without a JSON body.
 
-`http://127.0.0.1:8000/docs`
+### 13.3 Current Integration Status
 
-The planned tests include:
+The SQLite backend and FastAPI endpoints have been implemented and tested.
 
-| Test | Expected Result |
+The frontend files exist in the shared repository.
+
+Final frontend–backend integration and complete browser-based end-to-end testing remain separate development activities.
+
+The implementation should ensure that the frontend sends API requests to the correct backend origin.
+
+## 14. Automated Testing
+
+The backend has been tested using pytest and FastAPI TestClient.
+
+The implementation contains:
+
+- **9 SQLite database tests**
+- **12 FastAPI API tests**
+- **21 automated tests in total**
+
+### 14.1 SQLite Database Tests
+
+The nine database tests cover:
+
+1. Database connection.
+2. Assignments table creation.
+3. Table structure and columns.
+4. Default assignment status.
+5. Creating assignments.
+6. Retrieving all assignments.
+7. Retrieving an assignment by ID.
+8. Updating assignments.
+9. Deleting assignments.
+
+### 14.2 FastAPI Tests
+
+The twelve API tests cover:
+
+1. Creating an assignment.
+2. Retrieving all assignments.
+3. Retrieving an assignment by ID.
+4. Handling a missing assignment.
+5. Updating an assignment.
+6. Deleting an assignment.
+7. Rejecting an invalid title.
+8. Updating all assignment fields.
+9. Rejecting an invalid priority.
+10. Rejecting a description longer than 2,000 characters.
+11. Rejecting a module longer than 100 characters.
+12. Rejecting the invalid status `in_progress`.
+
+### 14.3 Test Execution
+
+The automated tests were executed from the project root using:
+
+```bash
+python -m pytest backend/tests/ -v
+```
+
+**Latest recorded result:**
+
+- 21 tests passed.
+- 0 tests failed.
+- 1 non-blocking Starlette/httpx deprecation warning.
+
+The warning did not prevent successful test completion.
+
+The tests use temporary databases for isolation and therefore do not depend on existing local SQLite records.
+
+## 15. Manual API Testing — Swagger UI
+
+Manual testing was completed using Swagger UI with Uvicorn running locally on port 8001.
+
+The following results were recorded:
+
+| Test | Expected HTTP Status | Result |
+| --- | --- | --- |
+| POST valid assignment | 201 | Passed |
+| GET assignments | 200 | Passed |
+| PUT assignment fields | 200 | Passed |
+| GET updated assignment | 200 | Passed |
+| DELETE assignment | 204 | Passed |
+| POST invalid priority | 422 | Passed |
+| POST description exceeding 2,000 characters | 422 | Passed |
+| POST module exceeding 100 characters | 422 | Passed |
+| PUT invalid status `in_progress` | 422 | Passed |
+
+### 15.1 Legacy Data Validation Issue
+
+During manual testing, GET `/assignments` initially returned HTTP 500 after stricter response validation was introduced.
+
+Investigation identified older local SQLite records with priority values outside the new permitted set.
+
+The affected local test records were corrected to use valid priority values.
+
+GET `/assignments` was executed again and returned HTTP 200 successfully.
+
+This finding demonstrates that introducing stricter validation requires consideration of pre-existing data.
+
+The issue was observed in the local development database; no automatic database migration is implemented as part of this validation update.
+
+## 16. Testing Evidence
+
+The following screenshots are retained as development and testing evidence:
+
+| Evidence File | Description |
 | --- | --- |
-| GET all assignments | Returns a JSON list |
-| GET existing assignment | Returns HTTP 200 |
-| GET missing assignment | Returns HTTP 404 |
-| POST valid assignment | Returns HTTP 201 |
-| POST missing title | Returns HTTP 422 |
-| POST invalid due date | Returns HTTP 422 |
-| PUT existing assignment | Returns updated data |
-| PUT missing assignment | Returns HTTP 404 |
-| DELETE existing assignment | Returns HTTP 204 |
-| DELETE missing assignment | Returns HTTP 404 |
+| `EduTrack_Backend_17_Tests_Passed.png` | Initial backend testing |
+| `EduTrack_Backend_21_Tests_Passed.png` | Updated automated testing |
+| `EduTrack_POST_Invalid_Priority_422.png` | Priority validation |
+| `EduTrack_POST_Invalid_Description_422.png` | Description length validation |
+| `EduTrack_POST_Invalid_Module_422.png` | Module length validation |
+| `EduTrack_PUT_Invalid_Status_422.png` | Status validation |
+| `EduTrack_GET_Assignments_After_Validation_Fix_200.png` | Successful retrieval after local data correction |
 
-These are proposed tests, not evidence of completed testing. Actual results will be recorded after implementation.
+Additional screenshots document successful assignment creation, retrieval, updating and deletion.
 
-## 13. Collaboration and Approval
+The screenshots provide supporting evidence for code review, the project presentation and the individual reflective report.
 
-The Backend Developer is responsible for drafting the API specification and implementing the FastAPI endpoints.
+## 17. Collaboration and Code Review
 
-Frontend developers will review the document to ensure that field names, request bodies and response formats match the user interface.
+The backend implementation was developed as part of the CPU4106 EduTrack group project.
 
-Before implementation, the team should confirm:
+Responsibilities include:
 
-- The five REST endpoints.
-- The seven-field assignment data model.
-- Whether optional `module` and `priority` fields are included in the final prototype.
-- The expected behaviour of the frontend when API errors occur.
-- The agreed API response formats.
+- **Backend Developer:** SQLite implementation, FastAPI endpoints, Pydantic validation, automated API testing and technical documentation.
+- **Frontend Developers:** HTML/CSS/JavaScript interface, user interaction, frontend validation and API integration.
+- **Scrum Master:** Sprint coordination, task tracking and project documentation.
 
-Once reviewed and approved, this document will act as the technical contract between the frontend and backend components.
+The development workflow uses GitHub feature branches and Pull Requests for team review.
 
-## 14. Implementation Status
+### 17.1 Backend Implementation
 
-**Current Status:** Proposed design.
+- **PR #39:** SQLite CRUD implementation — merged into `main`.
+- **PR #40:** FastAPI implementation and automated API tests — merged into `main`.
 
-The API specification describes the intended functionality and expected behaviour. It does not confirm that the endpoints have been implemented, tested or integrated.
+### 17.2 Validation Improvements
 
-The next development activities are:
+Following frontend/backend code review, the backend validation rules were strengthened to match the agreed interface constraints.
 
-1. Create the SQLite database connection and `assignments` table.
-2. Implement Pydantic models for request validation.
-3. Develop the FastAPI CRUD endpoints.
-4. Test the endpoints using Swagger UI and automated tests.
-5. Integrate the frontend with the backend.
-6. Record actual test results and document any changes to the agreed API contract.
+The improvements include priority restrictions, description and module length limits, removal of the unsupported `in_progress` status and additional automated tests.
+
+These changes were developed and tested locally before submission for a separate Pull Request.
+
+## 18. Implementation Status
+
+### Completed
+
+- SQLite database connection and assignments table.
+- Database CRUD functions.
+- FastAPI REST API endpoints.
+- Pydantic request and response models.
+- Priority validation.
+- Description length validation.
+- Module length validation.
+- Stored status validation.
+- 21 automated tests.
+- Manual Swagger UI validation testing.
+- Documentation of validation improvements.
+- Initial backend code review and integration into `main`.
+
+### Remaining Activities
+
+- Submit the backend validation improvements for team review.
+- Complete frontend–backend integration.
+- Verify overdue calculations using live API data.
+- Test assignment creation, viewing, updating and deletion through the frontend.
+- Check frontend handling of HTTP 204 and validation errors.
+- Complete final end-to-end testing and QA documentation.
+- Prepare evidence for the final presentation and individual report.
+
+## 19. Conclusion
+
+The EduTrack REST API provides the backend functionality required for the student assignment and progress tracking prototype.
+
+SQLite provides persistent assignment storage, FastAPI handles HTTP requests and CRUD operations, and Pydantic validates incoming and outgoing data.
+
+Following team code review, the backend validation rules were improved to align with the frontend requirements.
+
+All 21 automated backend tests passed, and manual Swagger UI testing confirmed the rejection of invalid priority, description, module and status values.
+
+The backend is implemented and tested for the documented scenarios. The next development milestone is complete frontend–backend integration, including end-to-end verification of overdue assignment behaviour.
 
 ---
 
-End of Document — EduTrack REST API Specification, Version 1.0
+**End of Document — EduTrack REST API Specification, Version 1.2**
