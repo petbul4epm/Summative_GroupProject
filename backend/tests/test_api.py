@@ -217,3 +217,64 @@ def test_update_all_assignment_fields_api(client):
     assert assignment["module"] == "CPU4106"
     assert assignment["priority"] == "high"
 
+# Test 18 - POST: Invalid priority
+def test_invalid_priority_api(client):
+    response = client.post(
+        "/assignments",
+        json={
+            "title": "Invalid Priority Test",
+            "due_date": "2026-11-15",
+            "priority": "urgent"  # Invalid priority
+        }
+    )        
+    assert response.status_code == 422
+
+# Test 19 - POST: Description exceeds maximum length
+def test_invalid_description_length_api(client):
+    long_description = "A" * 2001  # 2001 characters, exceeding the limit
+
+    response = client.post(
+        "/assignments",
+        json={
+            "title": "Long Description Test",
+            "due_date": "2026-11-15",
+            "description": long_description
+        }
+    )
+    assert response.status_code == 422
+
+# Test 20 - POST: Module exceeds maximum length
+def test_invalid_module_length_api(client):
+    long_module = "M" * 101  # 101 characters, exceeding the limit
+
+    response = client.post(
+        "/assignments",
+        json={
+            "title": "Long Module Test",
+            "due_date": "2026-11-15",
+            "module": long_module
+        }
+    )
+    assert response.status_code == 422
+
+# Test 21 - PUT: Invalid status
+def test_invalid_status_api(client):
+    created = client.post(
+        "/assignments",
+        json={
+            "title": "Invalid Status Test",
+            "due_date": "2026-11-15"
+        }
+    )
+
+    assignment_id = created.json()["id"]
+
+    response = client.put(
+        f"/assignments/{assignment_id}",
+        json={
+            "title": "Invalid Status Test",
+            "due_date": "2026-11-15",
+            "status": "in_progress"  # Invalid status for update
+        }
+    )
+    assert response.status_code == 422
