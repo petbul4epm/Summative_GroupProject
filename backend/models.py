@@ -9,22 +9,21 @@ from pydantic import BaseModel, Field
 class AssignmentCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     due_date: date
-    description: str | None = None
-    module: str | None = None
-    priority: str | None = None
-
-
+    description: str | None = Field(default=None, max_length=2000)
+    module: str | None = Field(default=None, max_length=100)
+    priority: Literal["low", "medium", "high"] | None = None
+     
 # UPDATE - Validate assignment changes
 class AssignmentUpdate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     due_date: date
-    status: Literal["pending", "in_progress", "completed"]
-    description: str | None = None
-    module: str | None = None
-    priority: str | None = None
+    status: Literal["pending", "completed"]
+    description: str | None = Field(default=None, max_length=2000)
+    module: str | None = Field(default=None, max_length=100)
+    priority: Literal["low", "medium", "high"] | None = None
 
 
 # RESPONSE - Data returned by FastAPI
 class AssignmentResponse(AssignmentCreate):
     id: int
-    status: Literal["pending", "in_progress", "completed"] = "pending"
+    status: Literal["pending", "completed"] = "pending"
