@@ -99,18 +99,41 @@ def get_assignment(assignment_id, database_path=DATABASE_PATH):
 
 
 
+
 # UPDATE — Modify an existing assignment
-def update_assignment(assignment_id, title, due_date, status, database_path=DATABASE_PATH):
+def update_assignment(
+    assignment_id,
+    title,
+    due_date,
+    status,
+    database_path=DATABASE_PATH,
+    description=None,
+    module=None,
+    priority=None
+):
     connection = get_connection(database_path)
 
     try:
         cursor = connection.execute(
             """
             UPDATE assignments
-            SET title = ?, due_date = ?, status = ?
+            SET title = ?,
+                due_date = ?,
+                status = ?,
+                description = ?,
+                module = ?,
+                priority = ?
             WHERE id = ?
             """,
-            (title, str(due_date), status, assignment_id)
+            (
+                title,
+                str(due_date),
+                status,
+                description,
+                module,
+                priority,
+                assignment_id
+            )
         )
 
         connection.commit()
