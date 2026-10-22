@@ -103,23 +103,35 @@ Some backend files and functionality are planned and may not yet exist on the ma
 
 ## 7. Local Development
 
-The backend will run locally using Python, FastAPI and SQLite.
-
-The proposed setup commands, to be verified once the backend implementation is integrated, are:
+Run these commands from the project root using Python, FastAPI and SQLite:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
+```
+
+Activate the environment:
+
+- Windows PowerShell: `.venv\Scripts\Activate.ps1`
+- macOS/Linux: `source .venv/bin/activate`
+
+Then install dependencies and start the server:
+
+```bash
 python -m pip install -r backend/requirements.txt
 python -m uvicorn backend.main:app --reload
 ```
 
-Once implemented and running, the API is expected at:
+- Connected application: **http://127.0.0.1:8000/app/** (include the trailing slash).
+- API documentation: http://127.0.0.1:8000/docs
+- API health message: http://127.0.0.1:8000/
 
-- `http://127.0.0.1:8000`
-- API documentation: `http://127.0.0.1:8000/docs`
+FastAPI serves the frontend and API from the same origin. No separate frontend server or CORS configuration is needed. Keep the terminal running while using the application. If a different port is selected, use that port in the browser address too.
 
-These instructions describe the planned development setup, not a verified deployment.
+Opening `frontend/index.html` directly, or adding `?demo=1` to the application URL, enables browser demo mode. Demo records use browser storage and are separate from SQLite; they do not demonstrate API integration.
+
+New assignments start as pending. Use Edit or Mark completed to change status after creation. A successful DELETE returns HTTP 204 without JSON; the frontend then reloads the assignment list.
+
+To check integration, add an assignment, edit it, mark it completed, refresh, restart the server and verify it remains, then delete it and refresh again. Record actual results in the QA log; this procedure is not itself evidence of a pass.
 
 ## 8. Team Responsibilities
 
@@ -175,3 +187,4 @@ The team will maintain evidence of actual contributions, implementation decision
 ---
 
 **EduTrack | CPU4106 Group Project | SDG 4 – Quality Education**
+
