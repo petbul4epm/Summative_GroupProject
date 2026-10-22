@@ -1,6 +1,8 @@
 
 # EduTrack — FastAPI Backend
 from contextlib import asynccontextmanager
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 from fastapi import HTTPException, status
 from backend.models import AssignmentCreate, AssignmentResponse
 from backend.database import create_assignment, get_assignment
@@ -128,5 +130,12 @@ def remove_assignment(assignment_id: int):
         )
 
     return None
+
+
+
+# Serve only frontend assets; API endpoints and Swagger remain available.
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+
 
 
