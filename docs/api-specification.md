@@ -10,7 +10,7 @@
 
 ---
 
-## 1. API Overview
+## 1. Introduction
 
 EduTrack is a web-based student assignment and progress tracking application designed to help students organise coursework, manage deadlines and monitor assignment completion.
 
@@ -134,10 +134,14 @@ The response model enforces the same priority, description, module and status re
 
 **Purpose:** Retrieve all assignments stored in the SQLite database.
 
-**HTTP Method:** GET  
+### 4.1 GET /assignments
+
+**Description:** Retrieves all assignment records from SQLite.
+
+**Method:** GET  
 **Endpoint:** `/assignments`  
 **Request Body:** None  
-**Successful Response:** 200 OK
+**Success:** 200 OK
 
 ### Example Response
 
@@ -146,7 +150,6 @@ The response model enforces the same priority, description, module and status re
   {
     "id": 1,
     "title": "Database Coursework",
-    "description": "Create an ERD diagram",
     "due_date": "2026-11-20",
     "module": "CPU4106",
     "priority": "high",
@@ -194,7 +197,6 @@ The API response contains the stored assignment status. The frontend calculates 
 {
   "id": 1,
   "title": "Database Coursework",
-  "description": "Create an ERD diagram",
   "due_date": "2026-11-20",
   "module": "CPU4106",
   "priority": "high",
@@ -211,17 +213,16 @@ The API response contains the stored assignment status. The frontend calculates 
 
 **Purpose:** Create a new assignment and store it in SQLite.
 
-**HTTP Method:** POST  
+**Method:** POST  
 **Endpoint:** `/assignments`  
 **Content-Type:** `application/json`  
 **Successful Response:** 201 Created
 
-### Example Request Body
+**Example Request Body**
 
 ```json
 {
   "title": "Database Coursework",
-  "description": "Create an ERD diagram",
   "due_date": "2026-11-20",
   "module": "CPU4106",
   "priority": "high"
@@ -238,7 +239,6 @@ The backend creates the assignment with status `pending`.
 {
   "id": 1,
   "title": "Database Coursework",
-  "description": "Create an ERD diagram",
   "due_date": "2026-11-20",
   "module": "CPU4106",
   "priority": "high",
@@ -260,7 +260,9 @@ Examples include:
 
 ## 8. PUT /assignments/{assignment_id} — Update an Assignment
 
-**Purpose:** Update an existing assignment.
+---
+
+### 4.4 PUT /assignments/{assignment_id}
 
 **HTTP Method:** PUT  
 **Endpoint:** `/assignments/{assignment_id}`  
@@ -269,7 +271,7 @@ Examples include:
 
 ### Example Request
 
-`PUT /assignments/1`
+`PUT /assignments/5`
 
 ### Example Request Body
 
@@ -279,8 +281,9 @@ Examples include:
   "description": "Complete database ERD and documentation",
   "due_date": "2026-11-25",
   "status": "completed",
-  "module": "CPU4106",
-  "priority": "medium"
+  "description": "Completed database design and SQLite testing",
+  "module": "CPU4106 Group Project",
+  "priority": "high"
 }
 ```
 
@@ -316,15 +319,33 @@ The previous `in_progress` value has been removed from Pydantic validation to al
 **HTTP Method:** DELETE  
 **Endpoint:** `/assignments/{assignment_id}`  
 **Request Body:** None  
-**Successful Response:** 204 No Content
+**Success:** 204 No Content
+
+**Example Request**
+
+`DELETE /assignments/5`
+
+**Successful Response**
+
+`HTTP 204 No Content`
+
+The response contains no JSON body.
+
+**Processing Rules**
+
+1. FastAPI receives the assignment ID.
+2. The `delete_assignment()` function executes a parameterised SQLite DELETE query.
+3. If the assignment is deleted, FastAPI returns HTTP 204.
+4. If the assignment does not exist, FastAPI returns HTTP 404.
 
 ### Example Request
 
-`DELETE /assignments/1`
+- `404 Not Found` — Assignment does not exist.
+- `422 Unprocessable Entity` — Invalid assignment ID.
 
-### Successful Response
+**Database Function:** `delete_assignment()`
 
-HTTP 204 No Content
+The frontend must handle HTTP 204 without attempting to parse an empty response as JSON.
 
 The successful response does not contain a JSON body.
 
