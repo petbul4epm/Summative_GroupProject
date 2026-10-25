@@ -278,3 +278,19 @@ def test_invalid_status_api(client):
         }
     )
     assert response.status_code == 422
+
+
+
+# Frontend assets and API must be reachable through the same server.
+def test_connected_frontend_assets(client):
+    response = client.get("/app/")
+    assert response.status_code == 200
+    assert "EduTrack" in response.text
+    assert 'src="script.js"' in response.text
+    assert client.get("/app/script.js").status_code == 200
+    assert client.get("/app/style.css").status_code == 200
+    assert client.get("/assignments").json() == []
+    assert client.get("/").json() == {"message": "EduTrack API is running"}
+    assert client.get("/docs").status_code == 200
+
+

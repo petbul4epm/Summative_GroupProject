@@ -19,7 +19,7 @@ function demoRequest(path, options) {
   }
   let result;
   if (method === 'POST') {
-    result = {...data, id: Math.max(0,...demoRecords.map(a=>a.id))+1};
+    result = {...data, status: 'pending', id: Math.max(0,...demoRecords.map(a=>a.id))+1};
     demoRecords.push(result);
   } else if (index < 0) throw new Error('Assignment not found.');
   else if (method === 'PUT') {result = {...data,id}; demoRecords[index] = result;}
@@ -36,6 +36,8 @@ const filter = document.querySelector('#filter');
 async function api(path='', options={}) {
   if (demoMode) return demoRequest(path, options);
   const response = await fetch('/assignments'+path, options);
+  // DELETE succeeds with an empty body, so do not parse it as JSON.
+  if (response.status === 204) return null;
   const data = await response.json();
   if (!response.ok) {
     const detail = Array.isArray(data.detail) ? data.detail.map(e=>e.loc.slice(1).join('.')+': '+e.msg).join('; ') : data.detail;
@@ -56,13 +58,17 @@ function todayISO() {
 function isOverdue(a) { return a.status==='pending' && a.due_date<todayISO(); }
 function resetForm() {
   editingId=null; form.reset();
+  document.querySelector('#status-field').hidden=true;
+  form.elements.status.disabled=true;
   document.querySelector('#form-heading').textContent='Add assignment';
   document.querySelector('#save').textContent='Add assignment';
   document.querySelector('#cancel').hidden=true;
 }
 function edit(a) {
   editingId=a.id;
-  ['title','description','module','due_date','priority','status'].forEach(k=>{form.elements[k].value=a[k];});
+  document.querySelector('#status-field').hidden=false;
+  form.elements.status.disabled=false;
+  ['title','description','module','due_date','priority','status'].forEach(k=>{form.elements[k].value=a[k] ?? (k==='priority'?'medium':'');});
   document.querySelector('#form-heading').textContent='Edit assignment';
   document.querySelector('#save').textContent='Save changes';
   document.querySelector('#cancel').hidden=false;
@@ -114,4 +120,5 @@ form.addEventListener('submit',async event=>{
 document.querySelector('#cancel').onclick=resetForm;
 filter.onchange=render;
 document.querySelector('#mode-label').textContent = demoMode ? 'Browser demo · saved on this device' : 'Connected to FastAPI';
-load().catch(()=>{message.textContent='Cannot connect. Start Sergiu’s FastAPI server or open index.html?demo=1 for the browser demo.';});
+load().catch(()=>{message.textContent='Cannot connect. Start FastAPI and open http://127.0.0.1:8000/app/ for the connected application. Add ?demo=1 for the browser demo.';});
+
