@@ -40,3 +40,13 @@ Code reviewed: PR #45 head `7a4ac573ca11606f3d9fe8768dc70da20e50018c`.
 - The attendance/teacher/marks requirements described elsewhere do not match this assignment-tracker story baseline and need scope reconciliation.
 
 This is a traceability review and proposed scope reconciliation, not a replacement for the original agreed user stories or an assertion of full acceptance.
+
+## Merged-main evidence update — 4 November 2026
+
+Tested `main`: `9a988c769a5e181f714e059476a2d58f1759ae76`. PR #45 is now merged; #36 and #38 were closed as completed on 29 October. The earlier pending-merge wording is historical.
+
+New assistant-operated Firefox 157.0 browser evidence supports US1 empty/populated lists; US2 creation with empty optional fields and refresh persistence; US3 expandable description; US4 edit; US5 cancel/delete and refresh; US7 completion and persistence across real server restart; US10 pending/completed/overdue filters; and US11 a pending overdue record ceasing to be overdue after completion. The 390px screenshot and no-overflow check add limited US12 evidence, with deletion exercised at mobile width. Do not infer unexecuted invalid-date/recovery, due-today boundary, or full mobile/cross-browser cases.
+
+[Detailed results and screenshots](evidence/merged-main-2026-11-04/README.md) and [QA acceptance addendum](integration-qa-record.md) retain tester, browser, tested SHA and actual results.
+
+US8 sorting, US9 search, module filtering, title-length mismatch, whitespace-only title validation and remaining scope/default decisions are tracked in #49. Closure of #36 is not treated as evidence that every earlier proposed decision was explicitly agreed.

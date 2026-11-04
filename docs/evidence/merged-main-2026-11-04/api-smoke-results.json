@@ -1,0 +1,46 @@
+[
+  {
+    "check": "Frontend, JS, CSS and docs served by live FastAPI",
+    "result": "PASS"
+  },
+  {
+    "check": "Initial API list empty",
+    "result": "PASS"
+  },
+  {
+    "check": "Create returns 201 with pending status and null optional fields",
+    "result": "PASS"
+  },
+  {
+    "check": "View created assignment",
+    "result": "PASS"
+  },
+  {
+    "check": "Edit returns 200 and saves fields",
+    "result": "PASS"
+  },
+  {
+    "check": "Complete returns 200 with completed status",
+    "result": "PASS"
+  },
+  {
+    "check": "Fresh GET retains edited fields and completion",
+    "result": "PASS"
+  },
+  {
+    "check": "Real server restart retains SQLite record and completion",
+    "result": "PASS"
+  },
+  {
+    "check": "Delete returns HTTP 204 and empty response body",
+    "result": "PASS"
+  },
+  {
+    "check": "Deleted record returns 404 and other record unchanged",
+    "result": "PASS"
+  },
+  {
+    "check": "Deletion survives server restart",
+    "result": "PASS"
+  }
+]

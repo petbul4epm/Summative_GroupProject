@@ -1,0 +1,52 @@
+{
+  "browser": "Firefox 157.0",
+  "automated_by": "Codex on behalf of Petya Markova (petbul4epm)",
+  "commit": "9a988c769a5e181f714e059476a2d58f1759ae76",
+  "checks": [
+    {
+      "check": "Connected FastAPI mode and empty list",
+      "result": "PASS"
+    },
+    {
+      "check": "Create one pending assignment with optional fields empty; overdue shown",
+      "result": "PASS"
+    },
+    {
+      "check": "Expand inline assignment details",
+      "result": "PASS"
+    },
+    {
+      "check": "Edit selected assignment and optional fields",
+      "result": "PASS"
+    },
+    {
+      "check": "Complete and filter by overdue/completed/pending",
+      "result": "PASS"
+    },
+    {
+      "check": "Browser refresh retains edits and completion",
+      "result": "PASS"
+    },
+    {
+      "check": "Server restart retains SQLite record in browser",
+      "result": "PASS"
+    },
+    {
+      "check": "Cancel deletion retains record",
+      "result": "PASS"
+    },
+    {
+      "check": "390px viewport has no horizontal overflow",
+      "result": "PASS"
+    },
+    {
+      "check": "Browser delete returns empty HTTP 204 and stays deleted after refresh",
+      "result": "PASS"
+    },
+    {
+      "check": "No browser JavaScript errors",
+      "result": "PASS"
+    }
+  ],
+  "page_errors": []
+}
